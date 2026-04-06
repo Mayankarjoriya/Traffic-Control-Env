@@ -84,23 +84,49 @@ class TrafficEnv:
             # Empty no. of cars in selected lane
             self.state["north_cars"] = 0
             self.state["west_cars"] = 0
-        done = (
-    self.state["north_cars"] == 0 and
-    self.state["south_cars"] == 0 and
-    self.state["east_cars"] == 0 and
-    self.state["west_cars"] == 0
-)
 
+
+        task_id_no = self.state["task_id"]
+
+        if task_id_no == 1:
+            done = (
+            self.state["north_cars"] == 0 and
+            self.state["south_cars"] == 0 and
+            self.state["east_cars"] == 0 and
+            self.state["west_cars"] == 0
+            )
+        elif task_id_no == 2:
+            done = (
+            self.state["north_cars"] < 5 and
+            self.state["south_cars"] < 5 and
+            self.state["east_cars"]  < 5 and
+            self.state["west_cars"]  < 5
+            )
+        elif task_id_no == 3:
+            done = (
+            self.state["north_cars"] < 10 and
+            self.state["south_cars"] < 10 and
+            self.state["east_cars"]  < 10 and
+            self.state["west_cars"]  < 10 and
+            self.state["ambulance_lane"] in [
+            self.state["current_green_0"],
+            self.state["current_green_1"]
+        ]
+            )
+
+        else:
+            print(f"No Task Assign : {task_id_no}")
+
+ 
         info = {
-    "total_wait": self.state["north_wait"] + self.state["south_wait"] + 
-                  self.state["east_wait"] + self.state["west_wait"]
-
-}
+            "total_wait": self.state["north_wait"] + self.state["south_wait"] + self.state["east_wait"] + self.state["west_wait"]
+                  
+            }
         if self.state["rush_hour"] and self.state["rush_hour"] != False:
             rush_lane= self.state["rush_hour"]
             self.state[f"{rush_lane}_cars"] += random.randint(1,5)
         # Ambulance penalty
-        if self.state["ambulance"] and self.state["ambulance_lane"] not in [current_green_0, current_green_1]:
+        if self.state["ambulance"] and self.state["ambulance_lane"] not in [self.state["current_green_0"], self.state["current_green_1"]]:
             Reward -= 5.0  # Max penalty!
 
         return self.state , Reward, done, info
@@ -123,6 +149,7 @@ class TrafficEnv:
             "ambulance": False,
             "ambulance_lane": None,
             "rush_hour": False,
+            "task_id": 1,
         }
             
         # medium
@@ -141,6 +168,7 @@ class TrafficEnv:
             "ambulance": False,
             "ambulance_lane": None,
             "rush_hour": "north",
+            "task_id":2,
         }
 
 
@@ -161,5 +189,6 @@ class TrafficEnv:
             "ambulance": True,
             "ambulance_lane": "west",
             "rush_hour": "north",
+            "task_id":3,
         }
        
