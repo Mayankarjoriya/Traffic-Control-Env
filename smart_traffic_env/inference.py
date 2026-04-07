@@ -9,7 +9,7 @@ MANDATORY
 
 - Defaults are set only for API_BASE_URL and MODEL_NAME
     API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
-    MODEL_NAME = os.getenv("MODEL_NAME", "meta-llama/Llama-3.3-70B-Instruct")
+    MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
 
 - The inference script must be named `inference.py` and placed in the root directory
 - Participants must use OpenAI Client for all LLM calls using above variables
@@ -27,14 +27,9 @@ from typing import List, Optional
 from dotenv import load_dotenv
 from openai import OpenAI
 
-try:
-    from smart_traffic_env import SmartTrafficEnv, SmartTrafficAction
-    from env import TrafficEnv          # keep for fallback
-except ImportError:
-    import sys, os
-    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-    from smart_traffic_env import SmartTrafficEnv, SmartTrafficAction
-    from env import TrafficEnv
+# Import the OpenEnv client and action model (self-contained, no env.py needed)
+from client import SmartTrafficEnv
+from models import SmartTrafficAction
 
 
 load_dotenv()
@@ -42,7 +37,7 @@ load_dotenv()
 API_KEY      = os.getenv("HF_TOKEN") or os.getenv("API_KEY")
 API_BASE_URL = os.getenv("API_BASE_URL") or "https://router.huggingface.co/v1"
 MODEL_NAME   = os.getenv("MODEL_NAME")  or "Qwen/Qwen2.5-72B-Instruct"
-ENV_URL      = os.getenv("ENV_URL") or "http://localhost:8080"
+ENV_URL      = os.getenv("ENV_URL") or "http://localhost:8000"
 BENCHMARK    = "traffic_env"
 MAX_STEPS    = 20
 TEMPERATURE  = 0.0
@@ -145,57 +140,33 @@ def run_task(openai_client: OpenAI, task_id: int) -> None:
     score   = 0.0
     success = False
 
-    # Attempt to use the Docker container server (OpenEnv)
-    try:
-        with SmartTrafficEnv(base_url=ENV_URL).sync() as env:
-            result = env.reset(task_id=task_id)
-            state = result.observation.model_dump()  # Get state as dict
-
-            for step in range(1, MAX_STEPS + 1):
-                action_str = get_model_action(openai_client, step, state, history)
-
-                # Execute step via remote client
-                action = SmartTrafficAction(action=action_str, task_id=task_id)
-                result = env.step(action)
-
-                state = result.observation.model_dump()
-                reward = result.reward
-                done = result.done
-
-                rewards.append(reward)
-                steps_taken = step
-                log_step(step=step, action=action_str, reward=reward, done=done, error=None)
-                history.append(f"Step {step}: {action_str} -> reward {reward:+.2f}")
-
-                if done:
-                    break
-
-            # Scoring (using final state)
-            overall_avg = (
-                state["north_wait"] + state["south_wait"] +
-                state["east_wait"]  + state["west_wait"]
-            ) / 4
-            score = min(max(1.0 - (overall_avg / 180), 0.0), 1.0)
-            success = score >= SUCCESS_SCORE_THRESHOLD
-
-    except Exception as e:
-        print(f"[DEBUG] Remote connection failed: {e}. Falling back to local env.py", flush=True)
-
-        # LOCAL FALLBACK (TrafficEnv)
-        env_local = TrafficEnv()
-        state = env_local.reset(task_id)
+    with SmartTrafficEnv(base_url=ENV_URL).sync() as env:
+        result = env.reset(task_id=task_id)
+        state = result.observation.model_dump()
 
         for step in range(1, MAX_STEPS + 1):
             action_str = get_model_action(openai_client, step, state, history)
-            state, reward, done, info = env_local.step(action_str)
+
+            action = SmartTrafficAction(action=action_str, task_id=task_id)
+            result = env.step(action)
+
+            state = result.observation.model_dump()
+            reward = result.reward
+            done = result.done
 
             rewards.append(reward)
             steps_taken = step
             log_step(step=step, action=action_str, reward=reward, done=done, error=None)
             history.append(f"Step {step}: {action_str} -> reward {reward:+.2f}")
-            if done: break
 
-        overall_avg = (state["north_wait"] + state["south_wait"] + state["east_wait"] + state["west_wait"]) / 4
+            if done:
+                break
+
+        # Scoring (using final state)
+        overall_avg = (
+            state["north_wait"] + state["south_wait"] +
+            state["east_wait"]  + state["west_wait"]
+        ) / 4
         score = min(max(1.0 - (overall_avg / 180), 0.0), 1.0)
         success = score >= SUCCESS_SCORE_THRESHOLD
 
@@ -205,7 +176,6 @@ def run_task(openai_client: OpenAI, task_id: int) -> None:
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    from openai import OpenAI
     client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
 
     for task_id in [1, 2, 3]:

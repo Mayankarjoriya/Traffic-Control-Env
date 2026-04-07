@@ -12,36 +12,26 @@ from openenv.core import EnvClient
 from openenv.core.client_types import StepResult
 from openenv.core.env_server.types import State
 
-from .models import SmartTrafficAction, SmartTrafficObservation
+try:
+    from .models import SmartTrafficAction, SmartTrafficObservation
+except ImportError:
+    from models import SmartTrafficAction, SmartTrafficObservation
 
 
 class SmartTrafficEnv(
     EnvClient[SmartTrafficAction, SmartTrafficObservation, State]
 ):
     """
-    Client for the Smart Traffic Env Environment.
-
-    This client maintains a persistent WebSocket connection to the environment server,
-    enabling efficient multi-step interactions with lower latency.
-    Each client instance has its own dedicated environment session on the server.
+    Client for the Smart Traffic Control Environment.
 
     Example:
-        >>> # Connect to a running server
-        >>> with SmartTrafficEnv(base_url="http://localhost:8000") as client:
-        ...     result = client.reset()
-        ...     print(result.observation.echoed_message)
+        >>> with SmartTrafficEnv(base_url="http://localhost:8000").sync() as client:
+        ...     result = client.reset(task_id=1)
+        ...     print(result.observation)
         ...
-        ...     result = client.step(SmartTrafficAction(message="Hello!"))
-        ...     print(result.observation.echoed_message)
-
-    Example with Docker:
-        >>> # Automatically start container and connect
-        >>> client = SmartTrafficEnv.from_docker_image("smart_traffic_env-env:latest")
-        >>> try:
-        ...     result = client.reset()
-        ...     result = client.step(SmartTrafficAction(message="Test"))
-        ... finally:
-        ...     client.close()
+        ...     action = SmartTrafficAction(action="NS_GREEN", task_id=1)
+        ...     result = client.step(action)
+        ...     print(result.observation.north_cars)
     """
 
     def _step_payload(self, action: SmartTrafficAction) -> Dict:
@@ -54,9 +44,7 @@ class SmartTrafficEnv(
         Returns:
             Dictionary representation suitable for JSON encoding
         """
-        return {
-            "message": action.message,
-        }
+        return action.model_dump()
 
     def _parse_result(self, payload: Dict) -> StepResult[SmartTrafficObservation]:
         """
@@ -69,13 +57,7 @@ class SmartTrafficEnv(
             StepResult with SmartTrafficObservation
         """
         obs_data = payload.get("observation", {})
-        observation = SmartTrafficObservation(
-            echoed_message=obs_data.get("echoed_message", ""),
-            message_length=obs_data.get("message_length", 0),
-            done=payload.get("done", False),
-            reward=payload.get("reward"),
-            metadata=obs_data.get("metadata", {}),
-        )
+        observation = SmartTrafficObservation(**obs_data)
 
         return StepResult(
             observation=observation,
