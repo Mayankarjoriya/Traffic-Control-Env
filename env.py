@@ -3,7 +3,7 @@ import random
 class TrafficEnv:
 
 
-    def state(self):
+    def get_state(self):
 
         return self.state
     
@@ -61,7 +61,7 @@ class TrafficEnv:
 
             # Measure waiting Time
             self.state["west_wait"] += 10
-            self.state['north_wait'] += 10
+            self.state['south_wait'] += 10
 
             # Empty no. of cars in selected lane
             self.state["east_cars"] = 0
@@ -104,16 +104,16 @@ class TrafficEnv:
             )
         elif task_id_no == 3:
             done = (
-            self.state["north_cars"] < 10 and
-            self.state["south_cars"] < 10 and
-            self.state["east_cars"]  < 10 and
-            self.state["west_cars"]  < 10 and
-            self.state["ambulance_lane"] in [
-            self.state["current_green_0"],
-            self.state["current_green_1"]
-        ]
+            self.state["north_cars"] < 15 and
+            self.state["south_cars"] < 15 and
+            self.state["east_cars"]  < 15 and
+            self.state["west_cars"]  < 15 
+            
+        #     self.state["ambulance_lane"] in [
+        #     self.state["current_green_0"],
+        #     self.state["current_green_1"]
+        # ]
             )
-
         else:
             print(f"No Task Assign : {task_id_no}")
 
@@ -191,4 +191,6 @@ class TrafficEnv:
             "rush_hour": "north",
             "task_id":3,
         }
+
+        return self.state
        

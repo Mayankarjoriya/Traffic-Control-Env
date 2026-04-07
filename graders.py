@@ -24,7 +24,7 @@ def calculate_score(history):
     
     overall_avg = (north_avg + south_avg + east_avg + west_avg) / 4
     
-    score = 1.0 - (overall_avg - 10) / 170
+    score = 1.0 - (overall_avg / 180) 
     score = max(0.0, min(1.0, score))
     
     return score
@@ -34,3 +34,16 @@ def grade_all(action_fn):
         history = collect_history(task_id, action_fn)
         score = calculate_score(history)
         print(f"task_{task_id}: {score:.2f}")
+
+
+if __name__ == '__main__':
+    import itertools
+
+    # Simple round-robin baseline that cycles through all four phases
+    ACTIONS = ["NS_GREEN", "EW_GREEN", "NE_GREEN", "NW_GREEN"]
+    _cycle = itertools.cycle(ACTIONS)
+
+    def baseline_action(state):
+        return next(_cycle)
+
+    grade_all(baseline_action)
