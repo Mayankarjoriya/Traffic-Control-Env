@@ -38,7 +38,7 @@ except Exception as e:  # pragma: no cover
 try:
     from ..models import SmartTrafficAction, SmartTrafficObservation
     from .smart_traffic_env_environment import SmartTrafficEnvironment
-except ModuleNotFoundError:
+except ImportError:
     from models import SmartTrafficAction, SmartTrafficObservation
     from server.smart_traffic_env_environment import SmartTrafficEnvironment
 
