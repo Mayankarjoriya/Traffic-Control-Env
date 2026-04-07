@@ -108,7 +108,7 @@ class SmartTrafficEnvironment(Environment):
                 "current_green_1": None,
                 "ambulance":       False,
                 "ambulance_lane":  None,
-                "rush_hour":       "north",
+                "rush_hour":       random.choice(["north", "south", "east", "west"]),
                 "task_id":         2,
             }
 
@@ -126,8 +126,8 @@ class SmartTrafficEnvironment(Environment):
                 "current_green_0": None,
                 "current_green_1": None,
                 "ambulance":       True,
-                "ambulance_lane":  "west",
-                "rush_hour":       "north",
+                "ambulance_lane":  random.choice(["north", "south", "east", "west"]),
+                "rush_hour":       random.choice(["north", "south", "east", "west"]),
                 "task_id":         3,
             }
 
@@ -183,12 +183,14 @@ class SmartTrafficEnvironment(Environment):
         if rush_lane and rush_lane is not False:
             self._env_state[f"{rush_lane}_cars"] += random.randint(1, 5)
 
-        # ---- Step 6 : ambulance penalty ----------------------------------
-        if (
-            self._env_state.get("ambulance")
-            and self._env_state.get("ambulance_lane") not in [green_0, green_1]
-        ):
-            reward -= 5.0
+        # ---- Step 6 : ambulance penalty and clearing ---------------------
+        if self._env_state.get("ambulance"):
+            if self._env_state.get("ambulance_lane") not in [green_0, green_1]:
+                reward -= 5.0  # ambulance is still waiting
+            else:
+                # Ambulance got green light, so it clears the intersection
+                self._env_state["ambulance"] = False
+                self._env_state["ambulance_lane"] = None
 
         # ---- Step 7 : done check (per-task threshold) --------------------
         n = self._env_state["north_cars"]
@@ -201,7 +203,9 @@ class SmartTrafficEnvironment(Environment):
         elif task_id == 2:
             done = (n < 5 and s < 5 and e < 5 and w < 5)
         elif task_id == 3:
-            done = (n < 15 and s < 15 and e < 15 and w < 15)
+            # Episode finishes when cars are minimal AND ambulance has successfully left
+            ambulance_cleared = not self._env_state.get("ambulance", False)
+            done = (n < 15 and s < 15 and e < 15 and w < 15) and ambulance_cleared
         else:
             print(f"No Task Assigned: {task_id}")
             done = False
