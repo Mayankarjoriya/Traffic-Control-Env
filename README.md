@@ -1,3 +1,12 @@
+---
+title: Smart Traffic Grid Env
+emoji: 🚦
+colorFrom: blue
+colorTo: green
+sdk: docker
+pinned: false
+---
+
 # Traffic-Control-Env
 
 A multi-task reinforcement learning environment for AI-driven traffic signal optimization at a four-way intersection, compatible with the [OpenEnv](https://openenv.ai/) framework.
