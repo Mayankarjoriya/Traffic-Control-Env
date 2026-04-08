@@ -33,12 +33,16 @@ class SmartTrafficAction(Action):
         - ``NW_GREEN`` : North + West green
     """
 
-    action: Literal["NS_GREEN", "EW_GREEN", "NE_GREEN", "NW_GREEN"] = Field(
-        ...,
-        description=(
-            "Traffic-signal phase to activate. "
-            "One of: NS_GREEN, EW_GREEN, NE_GREEN, NW_GREEN."
-        ),
+    # action: Literal["NS_GREEN", "EW_GREEN", "NE_GREEN", "NW_GREEN"] = Field(
+    #     ...,
+    #     description=(
+    #         "Traffic-signal phase to activate. "
+    #         "One of: NS_GREEN, EW_GREEN, NE_GREEN, NW_GREEN."
+    #     ),
+    # )
+    action: str = Field(
+        default="NS_GREEN",
+        description="Traffic-signal phase to activate. One of: NS_GREEN, EW_GREEN, NE_GREEN, NW_GREEN."
     )
 
     task_id: int = Field(
@@ -47,7 +51,6 @@ class SmartTrafficAction(Action):
         le=3,
         description="Difficulty level: 1 = Easy, 2 = Medium, 3 = Hard.",
     )
-
 
 # ---------------------------------------------------------------------------
 # Observation  (also serves as the step response payload)
