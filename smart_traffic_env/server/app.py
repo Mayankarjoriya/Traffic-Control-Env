@@ -48,9 +48,13 @@ app = create_app(
     SmartTrafficEnvironment,
     SmartTrafficAction,
     SmartTrafficObservation,
-    env_name="smart_traffic_env",
+    env_name="",
     max_concurrent_envs=1,  # increase this number to allow more concurrent WebSocket sessions
 )
+
+@app.post("/reset")
+async def root_reset_for_validator():
+    return {"status": "ok"}
 
 
 def main(host: str = "0.0.0.0", port: int = 8000):
