@@ -32,17 +32,12 @@ class SmartTrafficAction(Action):
         - ``NE_GREEN`` : North + East green
         - ``NW_GREEN`` : North + West green
     """
-
-    # action: Literal["NS_GREEN", "EW_GREEN", "NE_GREEN", "NW_GREEN"] = Field(
-    #     ...,
-    #     description=(
-    #         "Traffic-signal phase to activate. "
-    #         "One of: NS_GREEN, EW_GREEN, NE_GREEN, NW_GREEN."
-    #     ),
-    # )
-    action: str = Field(
+    action: Literal["NS_GREEN", "EW_GREEN", "NE_GREEN", "NW_GREEN"] = Field(
         default="NS_GREEN",
-        description="Traffic-signal phase to activate. One of: NS_GREEN, EW_GREEN, NE_GREEN, NW_GREEN."
+        description=(
+            "Traffic-signal phase to activate. "
+            "One of: NS_GREEN, EW_GREEN, NE_GREEN, NW_GREEN."
+        ),
     )
 
     task_id: int = Field(
