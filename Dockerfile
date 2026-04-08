@@ -16,8 +16,8 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
     mv /root/.local/bin/uv /usr/local/bin/uv && \
     mv /root/.local/bin/uvx /usr/local/bin/uvx
 
-# Copy only the environment package (not the whole repo root)
-COPY smart_traffic_env/ /app/env/
+# Copy the environment package
+COPY . /app/env/
 
 WORKDIR /app/env
 
