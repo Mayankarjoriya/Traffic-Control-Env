@@ -38,12 +38,7 @@ API_KEY      = os.getenv("HF_TOKEN") or os.getenv("API_KEY")
 API_BASE_URL = os.getenv("API_BASE_URL") or "https://router.huggingface.co/v1"
 MODEL_NAME   = os.getenv("MODEL_NAME")  or "Qwen/Qwen2.5-72B-Instruct"
 
-# --- Naya Dynamic URL Logic ---
-parser = argparse.ArgumentParser()
-parser.add_argument("--url", type=str, default=os.getenv("OPENENV_URL", "http://localhost:8000"))
-args, _ = parser.parse_known_args()
-ENV_URL = args.url
-# ------------------------------
+ENV_URL = "https://mayank203892-smart-traffic-grid-env.hf.space"
 
 BENCHMARK    = "traffic_env"
 MAX_STEPS    = 20
