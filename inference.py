@@ -23,7 +23,7 @@ STDOUT FORMAT
 import os
 import textwrap
 from typing import List, Optional
-
+import argparse
 from dotenv import load_dotenv
 from openai import OpenAI
 
@@ -37,7 +37,14 @@ load_dotenv()
 API_KEY      = os.getenv("HF_TOKEN") or os.getenv("API_KEY")
 API_BASE_URL = os.getenv("API_BASE_URL") or "https://router.huggingface.co/v1"
 MODEL_NAME   = os.getenv("MODEL_NAME")  or "Qwen/Qwen2.5-72B-Instruct"
-ENV_URL      = os.getenv("ENV_URL") or "http://localhost:8000"
+
+# --- Naya Dynamic URL Logic ---
+parser = argparse.ArgumentParser()
+parser.add_argument("--url", type=str, default=os.getenv("OPENENV_URL", "http://localhost:8000"))
+args, _ = parser.parse_known_args()
+ENV_URL = args.url
+# ------------------------------
+
 BENCHMARK    = "traffic_env"
 MAX_STEPS    = 20
 TEMPERATURE  = 0.0
