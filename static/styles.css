@@ -1,12 +1,13 @@
 :root {
-  --bg-color: #0f172a;
-  --road-color: #334155;
-  --grass-color: #1e293b;
-  --glass-bg: rgba(30, 41, 59, 0.7);
+  --bg-color: #020617;
+  --road-color: #1e293b;
+  --grass-color: #0f172a;
+  --glass-bg: rgba(15, 23, 42, 0.8);
   --glass-border: rgba(255, 255, 255, 0.1);
   --accent-blue: #38bdf8;
   --red-light: #ef4444;
   --green-light: #22c55e;
+  --building-color: #334155;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -30,227 +31,217 @@ body {
 .dashboard-panel {
   width: 360px;
   background: var(--glass-bg);
-  backdrop-filter: blur(16px);
+  backdrop-filter: blur(20px);
   border-right: 1px solid var(--glass-border);
-  padding: 2.5rem 2rem;
+  padding: 2rem;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
   z-index: 100;
-  box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+  box-shadow: 10px 0 50px rgba(0,0,0,0.8);
 }
 
-.brand { margin-bottom: -10px; }
+.brand { margin-bottom: 0.5rem; }
 .glow-text {
   background: linear-gradient(90deg, #fff, var(--accent-blue));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   font-weight: 800;
   font-size: 1.8rem;
-  letter-spacing: -0.5px;
 }
-.subtitle { color: #94a3b8; font-size: 0.9rem; font-weight: 500; margin-top: 4px; }
+.subtitle { color: #64748b; font-size: 0.85rem; font-weight: 500; }
 
-.metrics { display: flex; flex-direction: column; gap: 1rem; }
+.metrics { display: flex; flex-direction: column; gap: 0.75rem; }
 
 .metric-card {
-  background: rgba(0,0,0,0.3);
-  padding: 1.25rem;
+  background: rgba(0,0,0,0.4);
+  padding: 1rem;
   border-radius: 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   border: 1px solid var(--glass-border);
-  box-shadow: inset 0 2px 4px rgba(255,255,255,0.02);
 }
 
-.m-label { color: #94a3b8; font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-.m-value { font-size: 1.5rem; font-weight: 800; font-variant-numeric: tabular-nums; }
-.text-blue { color: var(--accent-blue); text-shadow: 0 0 15px rgba(56, 189, 248, 0.4); }
-.text-red { color: #f87171; text-shadow: 0 0 15px rgba(248, 113, 113, 0.4); }
+.m-label { color: #94a3b8; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; }
+.m-value { font-size: 1.4rem; font-weight: 800; }
+.text-blue { color: var(--accent-blue); text-shadow: 0 0 10px rgba(56, 189, 248, 0.4); }
+.text-red { color: #f87171; text-shadow: 0 0 10px rgba(248, 113, 113, 0.4); }
 
 .alerts { display: flex; flex-direction: column; gap: 0.75rem; }
 .alert-box {
-  padding: 1rem;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 0.95rem;
-  background: rgba(0,0,0,0.3);
-  border: 1px solid var(--glass-border);
-  transition: all 0.3s;
-  display: flex; align-items: center; gap: 8px;
+  padding: 1rem; border-radius: 8px; font-weight: 600; font-size: 0.9rem;
+  background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border);
+  display: flex; align-items: center; gap: 10px; transition: 0.3s;
 }
-.alert-hidden { opacity: 0.3; filter: grayscale(1); }
+.alert-hidden { opacity: 0.2; filter: grayscale(1); }
 .alert-ambulance:not(.alert-hidden) {
-  background: rgba(244, 63, 94, 0.2);
-  border-color: #f43f5e;
-  animation: pulse 1s infinite alternate;
-}
-.alert-rush:not(.alert-hidden) {
-  background: rgba(245, 158, 11, 0.2);
-  border-color: #f59e0b;
+  border-color: #f43f5e; color: #f43f5e;
+  box-shadow: 0 0 15px rgba(244, 63, 94, 0.3); animation: pulse 1s infinite alternate;
 }
 
-@keyframes pulse {
-  from { box-shadow: 0 0 5px rgba(244, 63, 94, 0.4); }
-  to { box-shadow: 0 0 20px rgba(244, 63, 94, 0.8); }
-}
+@keyframes pulse { from { opacity: 0.7; } to { opacity: 1; } }
 
-.config { margin-top: auto; }
-.config label { font-size: 0.8rem; color: #94a3b8; font-weight: 600; margin-bottom: 6px; display: block; }
+.config label { font-size: 0.75rem; color: #64748b; font-weight: 600; display: block; margin-bottom: 0.5rem; }
 .config input {
-  width: 100%; padding: 0.8rem; border-radius: 6px;
+  width: 100%; padding: 0.75rem; border-radius: 8px;
   border: 1px solid var(--glass-border); background: rgba(0,0,0,0.4); 
-  color: #fff; font-family: monospace; font-size: 0.85rem;
-  outline: none; transition: border-color 0.2s;
+  color: #fff; font-family: monospace; font-size: 0.8rem; outline: none;
 }
-.config input:focus { border-color: var(--accent-blue); }
 
-/* Simulation Area */
+/* --- Simulation Area --- */
 .sim-area {
   flex-grow: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: radial-gradient(circle at center, #1e293b 0%, #020617 100%);
+  background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+  display: flex; justify-content: center; align-items: center;
+  perspective: 1500px; overflow: hidden;
+}
+
+.isometric-container {
   position: relative;
+  transform-style: preserve-3d;
+  transform: rotateX(55deg) rotateZ(-45deg);
+  transition: transform 1s ease-in-out;
 }
 
 .intersection-grid {
   display: grid;
   grid-template-columns: 240px 240px 240px;
   grid-template-rows: 240px 240px 240px;
-  gap: 0;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 25px 80px rgba(0,0,0,0.8), inset 0 0 0 1px rgba(255,255,255,0.05);
+  width: 720px; height: 720px;
   background: var(--grass-color);
-  background-image: 
-    radial-gradient(circle at 10% 10%, rgba(255,255,255,0.03) 1px, transparent 1px),
-    radial-gradient(circle at 90% 90%, rgba(255,255,255,0.03) 1px, transparent 1px);
+  box-shadow: 0 0 100px rgba(0,0,0,0.5);
+  transform-style: preserve-3d;
 }
 
 .road {
   background: var(--road-color);
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  box-shadow: inset 0 0 40px rgba(0,0,0,0.3);
+  transform-style: preserve-3d;
 }
 
-/* Road Dividers */
-.road::after {
-  content: ""; position: absolute; background: repeating-linear-gradient(
-    to bottom,
-    transparent,
-    transparent 10px,
-    #94a3b8 10px,
-    #94a3b8 20px
-  );
+/* Markings */
+.road-v::after {
+  content: ""; position: absolute; left: 50%; top: 0; transform: translateX(-50%);
+  width: 4px; height: 100%;
+  background: repeating-linear-gradient(to bottom, #94a3b8, #94a3b8 20px, transparent 20px, transparent 40px);
 }
-.road-v::after { width: 4px; height: 100%; top: 0; left: calc(50% - 2px); }
-.road-h::after { 
-  width: 100%; height: 4px; left: 0; top: calc(50% - 2px);
-  background: repeating-linear-gradient(
-    to right, transparent, transparent 10px, #94a3b8 10px, #94a3b8 20px
-  );
+.road-h::after {
+  content: ""; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+  width: 100%; height: 4px;
+  background: repeating-linear-gradient(to right, #94a3b8, #94a3b8 20px, transparent 20px, transparent 40px);
 }
 
 .intersection-center {
-  background: #273447;
-  position: relative;
+  background: #334155; transform-style: preserve-3d;
 }
 
-/* Crosswalks */
-.crosswalk {
-  position: absolute; background: repeating-linear-gradient(to right, #e2e8f0, #e2e8f0 10px, transparent 10px, transparent 20px);
-}
-.north-cw { width: 80%; height: 20px; top: 10px; left: 10%; }
-.south-cw { width: 80%; height: 20px; bottom: 10px; left: 10%; }
-.east-cw { height: 80%; width: 20px; right: 10px; top: 10%; background: repeating-linear-gradient(to bottom, #e2e8f0, #e2e8f0 10px, transparent 10px, transparent 20px); }
-.west-cw { height: 80%; width: 20px; left: 10px; top: 10%; background: repeating-linear-gradient(to bottom, #e2e8f0, #e2e8f0 10px, transparent 10px, transparent 20px); }
+/* --- Custom Assets --- */
 
+/* Buildings */
+.building {
+  position: absolute; bottom: 20px; left: 20px;
+  transform-style: preserve-3d;
+}
+.building .face {
+  position: absolute; background: var(--building-color); border: 1px solid rgba(255,255,255,0.05);
+}
+.building .top {
+  width: 120px; height: 120px; transform: translateZ(120px);
+  background: #475569; border: 2px solid #64748b;
+}
+.building .front {
+  width: 120px; height: 120px; transform: rotateX(-90deg) translateZ(0); 
+  transform-origin: bottom; background: linear-gradient(to bottom, #334155, #1e293b);
+}
+.building .side {
+  width: 120px; height: 120px; transform: rotateY(90deg) translateZ(120px); 
+  transform-origin: left; background: #1e293b;
+}
+
+.building.school .face { background: #94a3b8; }
+.building.firestation .face { background: #450a0a; border-color: #7f1d1d; }
+.building.skyscrapers .top { height: 250px; transform: translateZ(250px); width: 80px;}
+.building.skyscrapers .front, .building.skyscrapers .side { height: 250px; width: 80px;}
+
+.building .label {
+  position: absolute; top: -30px; left: 0; color: var(--accent-blue);
+  font-size: 10px; font-weight: 800; letter-spacing: 2px;
+  transform: rotateZ(45deg) rotateX(-55deg); /* Counter-rotate to read */
+}
+
+/* Traffic Poles */
+.traffic-pole {
+  position: absolute; transform-style: preserve-3d; z-index: 50;
+}
+.traffic-pole .pole {
+  width: 6px; height: 120px; background: #000;
+  transform: rotateX(-90deg); transform-origin: bottom;
+}
+.traffic-pole .traffic-light {
+  position: absolute; width: 14px; height: 40px; background: #111;
+  bottom: 120px; left: -4px; border-radius: 4px; border: 1px solid #333;
+  transform: rotateX(-90deg) rotateY(45deg); display: flex; flex-direction: column; justify-content: space-around; align-items: center; padding: 4px;
+}
+.traffic-light::before {
+  content: ""; width: 8px; height: 8px; border-radius: 50%; background: #222; box-shadow: 0 0 2px #000;
+}
+.traffic-light.green::before { background: var(--green-light); box-shadow: 0 0 15px var(--green-light); }
+.traffic-light:not(.green)::before { background: var(--red-light); box-shadow: 0 0 15px var(--red-light); }
+
+.traffic-pole.north { bottom: 0; left: 60px; }
+.traffic-pole.south { top: 0; right: 60px; }
+.traffic-pole.east { left: 0; top: 60px; }
+.traffic-pole.west { right: 0; bottom: 60px; }
+
+
+/* RSU Data Hub */
+.rsu-hub {
+  position: absolute; left: 50%; top: 50%; transform: translateZ(20px); transform-style: preserve-3d;
+}
+.antenna {
+  width: 4px; height: 60px; background: #38bdf8; transform: rotateX(-90deg); transform-origin: bottom;
+}
+.signal-pulse {
+  position: absolute; border: 2px solid var(--accent-blue); border-radius: 50%;
+  width: 20px; height: 20px; left: -8px; top: -40px; animation: signal 2s infinite;
+}
+@keyframes signal {
+  from { transform: scale(0.5); opacity: 1; }
+  to { transform: scale(5); opacity: 0; }
+}
+
+/* --- Cars --- */
+.cars-container {
+  position: absolute; width: 100%; height: 100%; transform-style: preserve-3d;
+}
+.car {
+  width: 28px; height: 48px; background: #64748b; border-radius: 4px;
+  position: absolute; transform-style: preserve-3d;
+  box-shadow: 20px 20px 30px rgba(0,0,0,0.5);
+}
+.car .roof {
+  position: absolute; top: 10%; left: 10%; width: 80%; height: 50%;
+  background: #000; transform: translateZ(10px); border-radius: 2px;
+}
+.car.ambulance { background: #fff; border: 2px solid #ef4444; }
+
+/* SVG Data layer */
+.data-flow-layer {
+  position: absolute; top: 0; left: 0; pointer-events: none;
+  transform: translateZ(10px); width: 720px; height: 720px;
+}
+.data-path {
+  stroke: var(--accent-blue); stroke-width: 2; stroke-dasharray: 10, 10;
+  opacity: 0; transition: opacity 0.5s; stroke-linecap: round;
+}
+.data-path.active {
+  opacity: 0.6; animation: dash 1s linear infinite;
+}
+@keyframes dash { to { stroke-dashoffset: -20; } }
 
 .lane-stats {
-  position: absolute;
-  background: rgba(15, 23, 42, 0.85);
-  padding: 6px 12px; border-radius: 6px; z-index: 10;
-  font-size: 0.85rem; font-weight: 700; border: 1px solid rgba(255,255,255,0.1);
-  color: #fff;
+  position: absolute; background: rgba(0,0,0,0.7); padding: 4px 8px; border-radius: 4px;
+  font-size: 10px; font-weight: 800; top: 10px; right: 10px; border: 1px solid var(--glass-border);
+  transform: translateZ(10px);
 }
-.span-stat { color: var(--accent-blue); font-size: 1.1rem; margin-left: 4px; display: inline-block;}
-
-.lane-north .lane-stats { top: 15px; right: 15px; }
-.lane-south .lane-stats { bottom: 15px; right: 15px; }
-.lane-east .lane-stats { top: 15px; right: 15px; }
-.lane-west .lane-stats { top: 15px; left: 15px; }
-
-/* Traffic Lights */
-.traffic-light {
-  width: 24px; height: 24px; border-radius: 50%;
-  position: absolute;
-  background: radial-gradient(circle at 30% 30%, #fca5a5, var(--red-light));
-  box-shadow: 0 0 15px var(--red-light), inset 0 -2px 5px rgba(0,0,0,0.5);
-  border: 2px solid #1e293b;
-  transition: all 0.4s ease;
-  z-index: 20;
-}
-.traffic-light.green {
-  background: radial-gradient(circle at 30% 30%, #86efac, var(--green-light));
-  box-shadow: 0 0 25px var(--green-light), inset 0 -2px 5px rgba(0,0,0,0.5);
-}
-.light-north { bottom: 15px; left: calc(50% - 30px); }
-.light-south { top: 15px; right: calc(50% - 30px); }
-.light-east { left: 15px; top: calc(50% - 30px); }
-.light-west { right: 15px; bottom: calc(50% - 30px); }
-
-/* Cars and Container */
-.cars-container {
-  position: absolute; width: 100%; height: 100%;
-  pointer-events: none; z-index: 5;
-}
-
-.car {
-  width: 28px; height: 48px; border-radius: 6px;
-  position: absolute;
-  box-shadow: 0 5px 8px rgba(0,0,0,0.6), inset 0 2px 2px rgba(255,255,255,0.4);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Headlights & Taillights */
-.car::before, .car::after {
-  content: ""; width: 6px; height: 6px; border-radius: 50%;
-  position: absolute; z-index: 2;
-}
-.car::before { top: -2px; left: 3px; background: #fef08a; box-shadow: 0 -4px 15px #fef08a; }
-.car::after { top: -2px; right: 3px; background: #fef08a; box-shadow: 0 -4px 15px #fef08a; }
-
-.car .tail {
-  width: 100%; height: 100%; position: absolute; top:0; left:0; border-radius: 6px; overflow: hidden;
-}
-.car .tail::before, .car .tail::after {
-  content: ""; width: 6px; height: 3px; position: absolute; bottom: 0; background: #ef4444; box-shadow: 0 2px 8px #ef4444; border-radius: 2px 2px 0 0;
-}
-.car .tail::before { left: 4px; }
-.car .tail::after { right: 4px; }
-
-/* AMBULANCE */
-.car.ambulance {
-  border-top: 4px solid #f43f5e; border-bottom: 4px solid #f43f5e;
-  z-index: 8;
-}
-.car.ambulance::before, .car.ambulance::after {
-  background: #f43f5e; box-shadow: 0 -5px 25px rgba(244, 63, 94, 1); animation: wewoo 0.4s infinite alternate; width: 8px; height: 8px; top: -4px;
-}
-.car.ambulance::after { 
-  background: #3b82f6; box-shadow: 0 -5px 25px rgba(59, 130, 246, 1); animation-delay: 0.2s;
-}
-
-@keyframes wewoo { 0% { opacity: 0.3; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1.2); } }
-
-/* Roof / Windshield */
-.car .roof {
-  position: absolute; top: 15%; left: 10%; width: 80%; height: 60%;
-  background: rgba(0,0,0,0.8); border-radius: 4px; border: 1px solid rgba(255,255,255,0.2);
-}
+.span-stat { color: var(--accent-blue); margin-left: 4px; font-size: 12px;}

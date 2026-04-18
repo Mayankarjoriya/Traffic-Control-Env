@@ -51,57 +51,117 @@
             <!-- Endpoint config -->
             <div class="config">
                 <label>Hugging Face Target API URL:</label>
-                <!-- Pre-filled with the user's specific space URL -->
                 <input type="text" id="api-url" value="https://huggingface.co/spaces/Mayank203892/smart-traffic-grid-env" />
             </div>
         </aside>
 
         <!-- Intersection Map -->
         <main class="sim-area">
-            <div class="intersection-grid">
-                
-                <!-- TOP LEFT -->
-                <div class="grid-cell grass"></div>
-                <!-- NORTH LANE -->
-                <div class="grid-cell road road-v lane-north">
-                     <div class="lane-stats">North<span id="stats-n"><span class="span-stat">0</span></span></div>
-                     <div class="traffic-light light-north" id="light-north"></div>
-                     <div class="cars-container" id="cars-north"></div>
-                </div>
-                <!-- TOP RIGHT -->
-                <div class="grid-cell grass"></div>
+            <!-- 3D Wrapper -->
+            <div class="isometric-container">
+                <div class="intersection-grid">
+                    
+                    <!-- TOP LEFT: SCHOOL -->
+                    <div class="grid-cell grass">
+                        <div class="building school">
+                            <div class="face front"></div>
+                            <div class="face side"></div>
+                            <div class="face top"></div>
+                            <div class="label">SCHOOL</div>
+                        </div>
+                    </div>
 
-                <!-- WEST LANE -->
-                <div class="grid-cell road road-h lane-west">
-                    <div class="lane-stats">West<span id="stats-w"><span class="span-stat">0</span></span></div>
-                    <div class="traffic-light light-west" id="light-west"></div>
-                    <div class="cars-container" id="cars-west"></div>
-                </div>
-                <!-- CENTER (The Intersection) -->
-                <div class="grid-cell intersection-center">
-                    <div class="crosswalk north-cw"></div>
-                    <div class="crosswalk south-cw"></div>
-                    <div class="crosswalk east-cw"></div>
-                    <div class="crosswalk west-cw"></div>
-                </div>
-                <!-- EAST LANE -->
-                <div class="grid-cell road road-h lane-east">
-                    <div class="lane-stats">East<span id="stats-e"><span class="span-stat">0</span></span></div>
-                    <div class="traffic-light light-east" id="light-east"></div>
-                    <div class="cars-container" id="cars-east"></div>
-                </div>
+                    <!-- NORTH LANE -->
+                    <div class="grid-cell road road-v lane-north">
+                         <div class="lane-stats">North<span id="stats-n"><span class="span-stat">0</span></span></div>
+                         <div class="traffic-pole north">
+                            <div class="pole"></div>
+                            <div class="traffic-light" id="light-north"></div>
+                         </div>
+                         <div class="cars-container" id="cars-north"></div>
+                    </div>
 
-                <!-- BOTTOM LEFT -->
-                <div class="grid-cell grass"></div>
-                <!-- SOUTH LANE -->
-                <div class="grid-cell road road-v lane-south">
-                     <div class="lane-stats">South<span id="stats-s"><span class="span-stat">0</span></span></div>
-                     <div class="traffic-light light-south" id="light-south"></div>
-                     <div class="cars-container" id="cars-south"></div>
-                </div>
-                <!-- BOTTOM RIGHT -->
-                <div class="grid-cell grass"></div>
+                    <!-- TOP RIGHT: RESIDENTIAL -->
+                    <div class="grid-cell grass">
+                        <div class="building houses">
+                            <div class="face front"></div>
+                            <div class="face side"></div>
+                            <div class="face top"></div>
+                            <div class="label">RESIDENCES</div>
+                        </div>
+                    </div>
 
+                    <!-- WEST LANE -->
+                    <div class="grid-cell road road-h lane-west">
+                        <div class="lane-stats">West<span id="stats-w"><span class="span-stat">0</span></span></div>
+                        <div class="traffic-pole west">
+                            <div class="pole"></div>
+                            <div class="traffic-light" id="light-west"></div>
+                        </div>
+                        <div class="cars-container" id="cars-west"></div>
+                    </div>
+
+                    <!-- CENTER (The Intersection) -->
+                    <div class="grid-cell intersection-center">
+                        <div class="crosswalk north-cw"></div>
+                        <div class="crosswalk south-cw"></div>
+                        <div class="crosswalk east-cw"></div>
+                        <div class="crosswalk west-cw"></div>
+                        <!-- RSU / Data Hub -->
+                        <div class="rsu-hub">
+                             <div class="antenna"></div>
+                             <div class="signal-pulse"></div>
+                        </div>
+                    </div>
+
+                    <!-- EAST LANE -->
+                    <div class="grid-cell road road-h lane-east">
+                        <div class="lane-stats">East<span id="stats-e"><span class="span-stat">0</span></span></div>
+                        <div class="traffic-pole east">
+                            <div class="pole"></div>
+                            <div class="traffic-light" id="light-east"></div>
+                        </div>
+                        <div class="cars-container" id="cars-east"></div>
+                    </div>
+
+                    <!-- BOTTOM LEFT: FIRE STATION -->
+                    <div class="grid-cell grass">
+                        <div class="building firestation">
+                            <div class="face front"></div>
+                            <div class="face side"></div>
+                            <div class="face top"></div>
+                            <div class="label">FIRE STATION</div>
+                        </div>
+                    </div>
+
+                    <!-- SOUTH LANE -->
+                    <div class="grid-cell road road-v lane-south">
+                         <div class="lane-stats">South<span id="stats-s"><span class="span-stat">0</span></span></div>
+                         <div class="traffic-pole south">
+                            <div class="pole"></div>
+                            <div class="traffic-light" id="light-south"></div>
+                         </div>
+                         <div class="cars-container" id="cars-south"></div>
+                    </div>
+
+                    <!-- BOTTOM RIGHT: CITY CENTER / PARK -->
+                    <div class="grid-cell grass">
+                         <div class="building skyscrapers">
+                            <div class="face front"></div>
+                            <div class="face side"></div>
+                            <div class="face top"></div>
+                            <div class="label">OFFICES</div>
+                        </div>
+                    </div>
+
+                </div>
+                <!-- Data Flow SVG Overlay -->
+                <svg class="data-flow-layer" width="800" height="800" viewBox="0 0 800 800">
+                    <path id="path-north" d="M 400,200 L 400,400" fill="none" class="data-path" />
+                    <path id="path-south" d="M 400,600 L 400,400" fill="none" class="data-path" />
+                    <path id="path-east" d="M 600,400 L 400,400" fill="none" class="data-path" />
+                    <path id="path-west" d="M 200,400 L 400,400" fill="none" class="data-path" />
+                </svg>
             </div>
         </main>
     </div>
