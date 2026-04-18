@@ -53,7 +53,18 @@ app = create_app(
 )
 
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import RedirectResponse, Response
+
 app.mount("/ui", StaticFiles(directory="static", html=True), name="static_ui")
+
+@app.get("/", include_in_schema=False)
+async def root_redirect():
+    return RedirectResponse(url="/ui/")
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    # Return 204 No Content to prevent 404 errors in the logs for missing favicon
+    return Response(status_code=204)
 
 def main(host: str = "0.0.0.0", port: int = 8000):
     """
