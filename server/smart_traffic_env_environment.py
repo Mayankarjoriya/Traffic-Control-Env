@@ -5,7 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 """
-Smart Traffic Control Environment Implementation.
+Smart Traffic Control Environment Implementation (Enhanced).
 
 Ported from env.py (TrafficEnv).  The agent selects a traffic-signal phase
 each step; the environment updates car counts, wait times, and returns a
@@ -13,10 +13,14 @@ reward signal together with a done flag.
 
 Difficulty levels (task_id):
     1 – Easy   : small queues, no rush hour, no ambulance
-    2 – Medium : bigger queues, north rush hour
-    3 – Hard   : large queues, north rush hour, ambulance in west lane
-"""
+    2 – Medium : bigger queues, multiple rush hour lanes
+    3 – Hard   : large queues, multiple rush hour lanes, ambulance in random lane
 
+ENHANCEMENTS:
+    - Red light violations: Impatient vehicles cross red signals if wait exceeds threshold
+    - Multi-lane rush hour: Task 2 and 3 now have 2-3 lanes in rush simultaneously
+    - Realistic congestion: Agent must balance fairness with efficiency
+"""
 import random
 from uuid import uuid4
 
@@ -31,13 +35,14 @@ except ImportError:
 
 class SmartTrafficEnvironment(Environment):
     """
-    Four-way intersection traffic-control environment.
+    Four-way intersection traffic-control environment with violations and multi-lane rush.
 
     The agent picks one of four signal phases per step.  The chosen pair of
     lanes clears up to GREEN_CAPACITY cars each while the opposing lanes
-    accumulate wait time.  A rush-hour lane (task ≥ 2) adds random new
+    accumulate wait time.  Multiple rush-hour lanes (task ≥ 2) add random new
     arrivals every step.  An ambulance (task 3) penalises phases that leave
-    its lane red.
+    its lane red.  Vehicles that wait too long violate red signals, creating
+    additional penalty pressure.
 
     Episode ends when all lane queues fall below the task-specific threshold.
     """
@@ -46,6 +51,10 @@ class SmartTrafficEnvironment(Environment):
 
     # Maximum cars cleared per green lane per step (realistic flow model)
     GREEN_CAPACITY: int = 8
+
+    # Red light violation thresholds
+    RED_LIGHT_VIOLATION_THRESHOLD: int = 70  # If wait > 50, vehicles start violating
+    RED_LIGHT_VIOLATION_RATE: float = 0.015   # 3% of waiting cars violate per step
 
     # Map: action string → (green_0, green_1, lanes_that_clear, lanes_that_wait)
     _PHASE_MAP = {
@@ -67,8 +76,6 @@ class SmartTrafficEnvironment(Environment):
     def reset(self, task_id: int = 1) -> SmartTrafficObservation:
         """
         Reset the environment for a new episode.
-
-        Mirrors TrafficEnv.reset() from env.py.
 
         Args:
             task_id: Difficulty level (1 = Easy, 2 = Medium, 3 = Hard).
@@ -93,11 +100,11 @@ class SmartTrafficEnvironment(Environment):
                 "current_green_1": None,
                 "ambulance":       False,
                 "ambulance_lane":  None,
-                "rush_hour":       False,
+                "rush_hour":       [],  # No rush hour in easy
                 "task_id":         1,
             }
 
-        # ---- Medium -----------------------------------------------------
+        # ---- Medium (ENHANCED: Multiple rush lanes) --------------------
         elif task_id == 2:
             self._env_state = {
                 "north_cars":      random.randint(10, 20),
@@ -112,11 +119,12 @@ class SmartTrafficEnvironment(Environment):
                 "current_green_1": None,
                 "ambulance":       False,
                 "ambulance_lane":  None,
-                "rush_hour":       random.choice(["north", "south", "east", "west"]),
+                # ENHANCED: 2 random lanes in rush hour (not just 1)
+                "rush_hour":       random.sample(["north", "south", "east", "west"], k=2),
                 "task_id":         2,
             }
 
-        # ---- Hard -------------------------------------------------------
+        # ---- Hard (ENHANCED: Multiple rush lanes + ambulance) ---------
         elif task_id == 3:
             self._env_state = {
                 "north_cars":      random.randint(15, 30),
@@ -131,7 +139,11 @@ class SmartTrafficEnvironment(Environment):
                 "current_green_1": None,
                 "ambulance":       True,
                 "ambulance_lane":  random.choice(["north", "south", "east", "west"]),
-                "rush_hour":       random.choice(["north", "south", "east", "west"]),
+                # ENHANCED: 2-3 lanes in heavy rush hour (more realistic peak traffic)
+                "rush_hour":       random.sample(
+                    ["north", "south", "east", "west"], 
+                    k=random.randint(2, 3)
+                ),
                 "task_id":         3,
             }
 
@@ -146,34 +158,27 @@ class SmartTrafficEnvironment(Environment):
 
     def step(self, action: SmartTrafficAction) -> SmartTrafficObservation:  # type: ignore[override]
         """
-        Execute one traffic-signal phase.
-
-        Mirrors TrafficEnv.step() from env.py.
+        Execute one traffic-signal phase with violations and multi-lane rush support.
 
         Args:
-            action: SmartTrafficAction specifying the phase and (optionally)
-                    the task_id to switch difficulty mid-episode.
+            action: SmartTrafficAction specifying the phase and task_id.
 
         Returns:
-            SmartTrafficObservation containing updated state, reward, and
-            done flag.
+            SmartTrafficObservation containing updated state, reward, and done flag.
         """
         # --- BULLETPROOF TASK SYNC PATCH ---
-        # If the HTTP client dropped the task_id during reset(), catch it 
-        # on the very first step using the action payload and re-initialize.
         if self._state.step_count == 0 and self._env_state.get("task_id") != action.task_id:
             self.reset(task_id=action.task_id)
 
-
         self._state.step_count += 1
 
-        phase     = action.action
+        phase = action.action
 
         # If the validator sends random test data, safely default to NS_GREEN
         if phase not in self._PHASE_MAP:
             phase = "NS_GREEN"
             
-        task_id   = self._env_state.get("task_id", 1)
+        task_id = self._env_state.get("task_id", 1)
 
         green_0, green_1, clear_lanes, wait_lanes = self._PHASE_MAP[phase]
 
@@ -195,10 +200,11 @@ class SmartTrafficEnvironment(Environment):
             current = self._env_state[f"{lane}_cars"]
             self._env_state[f"{lane}_cars"] = max(0, current - self.GREEN_CAPACITY)
 
-        # ---- Step 5 : rush-hour arrivals ---------------------------------
-        rush_lane = self._env_state.get("rush_hour")
-        if rush_lane and rush_lane is not False:
-            self._env_state[f"{rush_lane}_cars"] += random.randint(1, 5)
+        # ---- Step 5 : rush-hour arrivals (multiple lanes) ----------------
+        rush_lanes = self._env_state.get("rush_hour", [])
+        if rush_lanes:  # Now it's a list that can have multiple lanes
+            for rush_lane in rush_lanes:
+                self._env_state[f"{rush_lane}_cars"] += random.randint(1, 5)
 
         # ---- Step 6 : ambulance penalty and clearing ---------------------
         if self._env_state.get("ambulance"):
@@ -209,7 +215,21 @@ class SmartTrafficEnvironment(Environment):
                 self._env_state["ambulance"] = False
                 self._env_state["ambulance_lane"] = None
 
-        # ---- Step 7 : done check (per-task threshold) --------------------
+        # ---- Step 7 : red light violations (impatient vehicles crossing) -------
+        violation_penalty = 0.0
+        for lane in ["north", "south", "east", "west"]:
+            violations = self._calculate_violations(lane)
+            if violations > 0:
+                # Vehicles crossed red light—creates safety hazard and disruption
+                violation_penalty -= violations * 2.0  # Heavy penalty per violation
+                # Remove violating vehicles (they escaped but caused disruption)
+                self._env_state[f"{lane}_cars"] -= violations
+                # Reset their wait time (they're gone)
+                self._env_state[f"{lane}_wait"] = 0
+
+        reward += violation_penalty
+
+        # ---- Step 8 : done check (per-task threshold) --------------------
         n = self._env_state["north_cars"]
         s = self._env_state["south_cars"]
         e = self._env_state["east_cars"]
@@ -253,14 +273,52 @@ class SmartTrafficEnvironment(Environment):
     # helpers
     # ------------------------------------------------------------------
 
+    def _calculate_violations(self, lane: str) -> int:
+        """
+        Calculate how many vehicles violate the red light due to impatience.
+        
+        If a lane has been waiting too long (exceeds RED_LIGHT_VIOLATION_THRESHOLD),
+        some percentage of vehicles will cross the red signal. This creates pressure
+        on the agent to rotate signals fairly and prevent excessive wait times.
+        
+        Args:
+            lane: The lane name ("north", "south", "east", "west")
+        
+        Returns:
+            Number of vehicles crossing the red light
+        """
+        wait_time = self._env_state[f"{lane}_wait"]
+        
+        # Only violations if wait exceeds threshold
+        if wait_time <= self.RED_LIGHT_VIOLATION_THRESHOLD:
+            return 0
+        
+        # Calculate violation count: more wait = more violations
+        excess_wait = wait_time - self.RED_LIGHT_VIOLATION_THRESHOLD
+        violation_count = int(excess_wait * self.RED_LIGHT_VIOLATION_RATE)
+        
+        # Can't violate more cars than exist in the queue
+        current_cars = self._env_state[f"{lane}_cars"]
+        return min(violation_count, current_cars)
+
     def _build_observation(
         self,
         reward: float,
         done: bool,
         metadata: dict | None = None,
     ) -> SmartTrafficObservation:
-        """Construct a SmartTrafficObservation from the current env state."""
+        """
+        Construct a SmartTrafficObservation from the current env state.
+        
+        Converts internal rush_hour list to comma-separated string for observation.
+        """
         s = self._env_state
+        
+        # Handle rush_hour: it's a list, convert to comma-separated string
+        rush_hour_str = None
+        if s.get("rush_hour"):
+            rush_hour_str = ",".join(s.get("rush_hour", []))
+        
         return SmartTrafficObservation(
             # car counts
             north_cars=s.get("north_cars", 0),
@@ -278,7 +336,7 @@ class SmartTrafficEnvironment(Environment):
             # special conditions
             ambulance=s.get("ambulance", False),
             ambulance_lane=s.get("ambulance_lane"),
-            rush_hour=s.get("rush_hour") or None,
+            rush_hour=rush_hour_str,  # Now a comma-separated string or None
             # episode meta
             task_id=s.get("task_id", 1),
             # openenv base fields

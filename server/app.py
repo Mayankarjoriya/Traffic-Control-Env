@@ -41,7 +41,7 @@ try:
 except ImportError:
     from models import SmartTrafficAction, SmartTrafficObservation
     from server.smart_traffic_env_environment import SmartTrafficEnvironment
-
+from fastapi.middleware.cors import CORSMiddleware
 
 # Create the app with web interface and README integration
 app = create_app(
@@ -50,6 +50,14 @@ app = create_app(
     SmartTrafficObservation,
     env_name="",
     max_concurrent_envs=1,  # increase this number to allow more concurrent WebSocket sessions
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allow all origins (safe for local dev)
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 from fastapi.staticfiles import StaticFiles
