@@ -74,7 +74,7 @@ Each action payload also includes the `task_id` to indicate the active difficult
 }
 ```
 
-When a pair of lanes gets the green, those lanes have their car queues cleared to zero. The opposing lanes accumulate `+10` wait-time units and continue holding their vehicle counts.
+When a pair of lanes gets the green, those lanes clear up to **8 cars per step** (graduated flow model — simulating realistic intersection throughput). The opposing lanes accumulate `+10` wait-time units and continue holding their vehicle counts.
 
 ---
 
@@ -151,13 +151,13 @@ A score of `1.0` means no waiting time accumulated; `0.0` means the mean wait re
 
 ## Baseline Scores
 
-The following baseline scores were measured using a **round-robin policy** (cycling through `NS_GREEN → EW_GREEN → NE_GREEN → NW_GREEN` repeatedly, max 100 steps):
+The following baseline scores were measured using a **round-robin policy** (cycling through `NS_GREEN → EW_GREEN → NE_GREEN → NW_GREEN` repeatedly, max 100 steps) with the graduated clearing model (up to 8 cars cleared per green lane per step):
 
 | Task | Policy | Score |
 |------|--------|-------|
-| Task 1 — Easy | Round-robin | ~0.72 |
-| Task 2 — Medium | Round-robin | ~0.45 |
-| Task 3 — Hard | Round-robin | ~0.18 |
+| Task 1 — Easy | Round-robin | ~0.92 |
+| Task 2 — Medium | Round-robin | ~0.85 |
+| Task 3 — Hard | Round-robin | ~0.90 |
 
 > **Note:** Scores vary run-to-run due to randomized initial states. These are approximate averages.  
 > A score ≥ 0.50 is considered a successful episode.

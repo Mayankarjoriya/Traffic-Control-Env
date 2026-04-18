@@ -34,14 +34,18 @@ class SmartTrafficEnvironment(Environment):
     Four-way intersection traffic-control environment.
 
     The agent picks one of four signal phases per step.  The chosen pair of
-    lanes clears its queue (cars → 0) while the opposing lanes accumulate
-    wait time.  A rush-hour lane (task ≥ 2) adds random new arrivals every
-    step.  An ambulance (task 3) penalises phases that leave its lane red.
+    lanes clears up to GREEN_CAPACITY cars each while the opposing lanes
+    accumulate wait time.  A rush-hour lane (task ≥ 2) adds random new
+    arrivals every step.  An ambulance (task 3) penalises phases that leave
+    its lane red.
 
     Episode ends when all lane queues fall below the task-specific threshold.
     """
 
     SUPPORTS_CONCURRENT_SESSIONS: bool = True
+
+    # Maximum cars cleared per green lane per step (realistic flow model)
+    GREEN_CAPACITY: int = 8
 
     # Map: action string → (green_0, green_1, lanes_that_clear, lanes_that_wait)
     _PHASE_MAP = {
@@ -186,9 +190,10 @@ class SmartTrafficEnvironment(Environment):
         for lane in wait_lanes:
             self._env_state[f"{lane}_wait"] += 10
 
-        # ---- Step 4 : clear green lanes ----------------------------------
+        # ---- Step 4 : graduated clearing of green lanes ------------------
         for lane in clear_lanes:
-            self._env_state[f"{lane}_cars"] = 0
+            current = self._env_state[f"{lane}_cars"]
+            self._env_state[f"{lane}_cars"] = max(0, current - self.GREEN_CAPACITY)
 
         # ---- Step 5 : rush-hour arrivals ---------------------------------
         rush_lane = self._env_state.get("rush_hour")

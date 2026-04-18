@@ -21,6 +21,7 @@ STDOUT FORMAT
 """
 
 import os
+import re
 import textwrap
 from typing import List, Optional
 import argparse
@@ -42,8 +43,8 @@ ENV_URL = "https://mayank203892-smart-traffic-grid-env.hf.space"
 
 BENCHMARK    = "traffic_env"
 MAX_STEPS    = 20
-TEMPERATURE  = 0.0
-MAX_TOKENS   = 10
+TEMPERATURE  = 0.2
+MAX_TOKENS   = 300
 SUCCESS_SCORE_THRESHOLD = 0.5
 
 ACTIONS = ["NS_GREEN", "EW_GREEN", "NE_GREEN", "NW_GREEN"]
@@ -55,12 +56,35 @@ TASK_NAMES = {
 }
 
 SYSTEM_PROMPT = textwrap.dedent("""
-    You are a traffic signal controller AI.
-    You will see the current traffic state with car counts and wait times for each lane.
+    You are an expert traffic signal controller AI for a four-way intersection.
     Your goal is to minimize total waiting time across all lanes.
-    If an ambulance is present, prioritize clearing its lane immediately.
-    Choose exactly one action from: NS_GREEN, EW_GREEN, NE_GREEN, NW_GREEN
-    Reply with ONLY the action name, nothing else.
+
+    IMPORTANT PRIORITIES (in order):
+    1. AMBULANCE: If an ambulance is present, you MUST clear its lane immediately.
+       Pick the action that includes the ambulance's lane. Every step the ambulance
+       waits costs a -5.0 penalty.
+    2. RUSH HOUR: The rush-hour lane gains 1-5 new cars every step. Prioritise
+       clearing it frequently to prevent queue buildup.
+    3. HIGH WAIT / HIGH CARS: Among remaining lanes, favour the pair with the
+       highest combined car count and cumulative wait time.
+
+    Green lights clear up to 8 cars per step from each green lane.
+    Red lanes accumulate +10 wait-time units per step.
+
+    ACTIONS:
+      NS_GREEN — North + South get green
+      EW_GREEN — East  + West  get green
+      NE_GREEN — North + East  get green
+      NW_GREEN — North + West  get green
+
+    THINK step-by-step:
+    1. Check for ambulance — which lane? Which action clears it?
+    2. Check rush-hour lane — does it need immediate attention?
+    3. Compare car counts and wait times across all four lanes.
+    4. Pick the single best action.
+
+    After your reasoning, output your final decision wrapped in XML tags:
+    <action>ACTION_NAME</action>
 """).strip()
 
 
@@ -93,22 +117,41 @@ def build_user_prompt(step: int, state: dict, history: List[str]) -> str:
     history_block = "\n".join(history[-4:]) if history else "None"
     return textwrap.dedent(f"""
         Step: {step}
-        North lane : {state['north_cars']} cars, waited {state['north_wait']} seconds
-        South lane : {state['south_cars']} cars, waited {state['south_wait']} seconds
-        East  lane : {state['east_cars']}  cars, waited {state['east_wait']}  seconds
-        West  lane : {state['west_cars']}  cars, waited {state['west_wait']}  seconds
-        Ambulance  : {state['ambulance']} (lane: {state['ambulance_lane']})
-        Rush hour  : {state['rush_hour']}
+        ┌──────────┬───────┬────────────┐
+        │  Lane    │ Cars  │ Wait Time  │
+        ├──────────┼───────┼────────────┤
+        │  North   │ {state['north_cars']:>5} │ {state['north_wait']:>10} │
+        │  South   │ {state['south_cars']:>5} │ {state['south_wait']:>10} │
+        │  East    │ {state['east_cars']:>5} │ {state['east_wait']:>10} │
+        │  West    │ {state['west_cars']:>5} │ {state['west_wait']:>10} │
+        └──────────┴───────┴────────────┘
+        Ambulance present : {state['ambulance']}  (lane: {state['ambulance_lane']})
+        Rush-hour lane    : {state['rush_hour']}
 
-        Previous steps:
+        Recent history:
         {history_block}
 
-        Choose one action: NS_GREEN, EW_GREEN, NE_GREEN, NW_GREEN
-        Reply with ONLY the action name.
+        Think step-by-step, then give your final answer as <action>ACTION_NAME</action>.
     """).strip()
 
 
 # ── Model action function ─────────────────────────────────────────────────────
+
+def _extract_action(raw: str) -> str:
+    """Extract the action from model output using layered fallbacks."""
+    # 1. Try <action>...</action> XML tags
+    match = re.search(r"<action>\s*(\w+)\s*</action>", raw, re.IGNORECASE)
+    if match and match.group(1).upper() in ACTIONS:
+        return match.group(1).upper()
+
+    # 2. Scan for any valid action keyword in the raw output
+    for action in ACTIONS:
+        if action in raw.upper():
+            return action
+
+    # 3. Last resort
+    return "NS_GREEN"
+
 
 def get_model_action(client: OpenAI, step: int, state: dict, history: List[str]) -> str:
     user_prompt = build_user_prompt(step, state, history)
@@ -123,8 +166,8 @@ def get_model_action(client: OpenAI, step: int, state: dict, history: List[str])
             max_tokens=MAX_TOKENS,
             stream=False,
         )
-        action = (completion.choices[0].message.content or "").strip()
-        return action if action in ACTIONS else "NS_GREEN"  # fallback
+        raw = completion.choices[0].message.content or ""
+        return _extract_action(raw)
     except Exception as exc:
         print(f"[DEBUG] Model request failed: {exc}", flush=True)
         return "NS_GREEN"  # fallback
