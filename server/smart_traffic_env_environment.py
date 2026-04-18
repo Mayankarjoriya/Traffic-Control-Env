@@ -58,10 +58,10 @@ class SmartTrafficEnvironment(Environment):
 
     # Map: action string → (green_0, green_1, lanes_that_clear, lanes_that_wait)
     _PHASE_MAP = {
-        "NS_GREEN": ("north", "south", ["north", "south"], ["east", "west"]),
-        "EW_GREEN": ("east",  "west",  ["east",  "west"],  ["north", "south"]),
-        "NE_GREEN": ("north", "east",  ["north", "east"],  ["south", "west"]),
-        "NW_GREEN": ("north", "west",  ["north", "west"],  ["south", "east"]),
+        "NORTH_GREEN": ("north", None, ["north"], ["south", "east", "west"]),
+        "SOUTH_GREEN": ("south", None, ["south"], ["north", "east", "west"]),
+        "EAST_GREEN":  ("east", None,  ["east"],  ["north", "south", "west"]),
+        "WEST_GREEN":  ("west", None,  ["west"],  ["north", "south", "east"]),
     }
 
     def __init__(self):
@@ -174,9 +174,9 @@ class SmartTrafficEnvironment(Environment):
 
         phase = action.action
 
-        # If the validator sends random test data, safely default to NS_GREEN
+        # If the validator sends random test data, safely default to NORTH_GREEN
         if phase not in self._PHASE_MAP:
-            phase = "NS_GREEN"
+            phase = "NORTH_GREEN"
             
         task_id = self._env_state.get("task_id", 1)
 
@@ -186,14 +186,19 @@ class SmartTrafficEnvironment(Environment):
         self._env_state["current_green_0"] = green_0
         self._env_state["current_green_1"] = green_1
 
-        # ---- Step 2 : compute reward (cars still blocked cost 0.1 each) --
+        # ---- Step 2 : compute reward (cars still blocked cost 0.05 each) --
+        # Reduced from 0.1 to 0.05 because 3 lanes wait now (single-lane green)
         reward = 0.0
         for lane in wait_lanes:
-            reward -= self._env_state[f"{lane}_cars"] * 0.1
+            reward -= self._env_state[f"{lane}_cars"] * 0.05
 
         # ---- Step 3 : accumulate wait time for red lanes -----------------
         for lane in wait_lanes:
             self._env_state[f"{lane}_wait"] += 10
+            
+        # Small penalty for total accumulated wait (gentle pressure to keep wait low)
+        total_wait_now = sum(self._env_state[f"{l}_wait"] for l in ["north", "south", "east", "west"])
+        reward -= 0.01 * total_wait_now
 
         # ---- Step 4 : graduated clearing of green lanes ------------------
         for lane in clear_lanes:

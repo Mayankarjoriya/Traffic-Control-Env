@@ -44,6 +44,7 @@ body {
 .brand { margin-bottom: 0.5rem; }
 .glow-text {
   background: linear-gradient(90deg, #fff, var(--accent-blue));
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   font-weight: 800;
@@ -245,3 +246,23 @@ body {
   transform: translateZ(10px);
 }
 .span-stat { color: var(--accent-blue); margin-left: 4px; font-size: 12px;}
+
+/* --- Controls --- */
+.controls { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem;}
+.controls label { font-size: 0.75rem; color: #64748b; font-weight: 600; }
+.btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.btn-action {
+  background: rgba(56, 189, 248, 0.1); border: 1px solid var(--accent-blue); 
+  color: var(--accent-blue); padding: 0.5rem; border-radius: 6px;
+  font-weight: 600; cursor: pointer; transition: all 0.2s;
+}
+.btn-action:hover { background: var(--accent-blue); color: #fff; box-shadow: 0 0 10px var(--accent-blue); }
+.btn-action:active { transform: scale(0.95); }
+
+.btn-replay {
+  background: rgba(34, 197, 94, 0.1); border: 1px solid var(--green-light);
+  color: var(--green-light); padding: 0.75rem; border-radius: 6px;
+  font-weight: 700; cursor: pointer; transition: all 0.2s; text-transform: uppercase;
+}
+.btn-replay:hover { background: var(--green-light); color: #fff; box-shadow: 0 0 15px var(--green-light); }
+.btn-replay.active { background: #f59e0b; border-color: #f59e0b; color: #fff; box-shadow: 0 0 15px #f59e0b; animation: pulse 1.5s infinite; }

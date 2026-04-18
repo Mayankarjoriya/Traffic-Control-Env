@@ -14,7 +14,7 @@ from models import SmartTrafficAction
 
 
 ENV_URL = "http://localhost:8000"
-ACTIONS = ["NS_GREEN", "EW_GREEN", "NE_GREEN", "NW_GREEN"]
+ACTIONS = ["NORTH_GREEN", "SOUTH_GREEN", "EAST_GREEN", "WEST_GREEN"]
 
 # Per-task acceptable wait-time thresholds.
 # These represent the average wait time at which score becomes 0.

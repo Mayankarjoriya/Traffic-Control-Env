@@ -69,7 +69,55 @@ function renderCars(laneId, targetCount, ambulanceInfo) {
     }
 }
 
-async function fetchState() {
+let episodeHistory = [];
+let isReplaying = false;
+let replayIndex = 0;
+let fetchInterval = null;
+let replayInterval = null;
+let currentTaskId = 1;
+
+function renderState(data) {
+    document.getElementById('hud-task').innerText = `Task ${data.task_id}`;
+    currentTaskId = data.task_id;
+    document.getElementById('hud-step').innerText = data.metadata?.step ?? '0';
+    document.getElementById('hud-reward').innerText = (data.reward || 0).toFixed(2);
+    
+    const totalWait = (data.north_wait + data.south_wait + data.east_wait + data.west_wait);
+    document.getElementById('hud-wait').innerText = `${totalWait}s`;
+
+    const rhAlert = document.getElementById('alert-rush');
+    if (data.rush_hour) {
+        rhAlert.classList.remove('alert-hidden');
+        document.getElementById('val-rush').innerText = data.rush_hour.toUpperCase();
+    } else {
+        rhAlert.classList.add('alert-hidden');
+    }
+
+    const ambAlert = document.getElementById('alert-ambulance');
+    if (data.ambulance && data.ambulance_lane) {
+        ambAlert.classList.remove('alert-hidden');
+        document.getElementById('val-amb').innerText = data.ambulance_lane.toUpperCase();
+    } else {
+        ambAlert.classList.add('alert-hidden');
+    }
+
+    document.querySelectorAll('.traffic-light').forEach(el => el.classList.remove('green'));
+    if (data.current_green_0) document.getElementById(`light-${data.current_green_0}`)?.classList.add('green');
+    if (data.current_green_1) document.getElementById(`light-${data.current_green_1}`)?.classList.add('green');
+
+    document.getElementById('stats-n').innerHTML = ` <span class="span-stat">${data.north_cars}</span>`;
+    document.getElementById('stats-s').innerHTML = ` <span class="span-stat">${data.south_cars}</span>`;
+    document.getElementById('stats-e').innerHTML = ` <span class="span-stat">${data.east_cars}</span>`;
+    document.getElementById('stats-w').innerHTML = ` <span class="span-stat">${data.west_cars}</span>`;
+
+    const ambInfo = { isAmbulance: data.ambulance, lane: data.ambulance_lane };
+    renderCars('north', data.north_cars, ambInfo);
+    renderCars('south', data.south_cars, ambInfo);
+    renderCars('east', data.east_cars, ambInfo);
+    renderCars('west', data.west_cars, ambInfo);
+}
+
+function getApiUrl() {
     let apiUrl = document.getElementById('api-url').value.trim();
     if (apiUrl.endsWith('/')) apiUrl = apiUrl.slice(0, -1);
     
@@ -85,7 +133,13 @@ async function fetchState() {
         }
         document.getElementById('api-url').value = apiUrl;
     }
+    return apiUrl;
+}
 
+async function fetchState() {
+    if (isReplaying) return;
+
+    const apiUrl = getApiUrl();
     const endpoint = `${apiUrl}/state`;
 
     try {
@@ -96,48 +150,81 @@ async function fetchState() {
         if (!response.ok) throw new Error("HTTP error " + response.status);
         const data = await response.json();
         
-        document.getElementById('hud-task').innerText = `Task ${data.task_id}`;
-        document.getElementById('hud-step').innerText = data.metadata?.step ?? '0';
-        document.getElementById('hud-reward').innerText = (data.reward || 0).toFixed(2);
-        
-        const totalWait = (data.north_wait + data.south_wait + data.east_wait + data.west_wait);
-        document.getElementById('hud-wait').innerText = `${totalWait}s`;
+        episodeHistory.push(data);
+        if (episodeHistory.length > 500) episodeHistory.shift();
 
-        const rhAlert = document.getElementById('alert-rush');
-        if (data.rush_hour) {
-            rhAlert.classList.remove('alert-hidden');
-            document.getElementById('val-rush').innerText = data.rush_hour.toUpperCase();
-        } else {
-            rhAlert.classList.add('alert-hidden');
-        }
-
-        const ambAlert = document.getElementById('alert-ambulance');
-        if (data.ambulance && data.ambulance_lane) {
-            ambAlert.classList.remove('alert-hidden');
-            document.getElementById('val-amb').innerText = data.ambulance_lane.toUpperCase();
-        } else {
-            ambAlert.classList.add('alert-hidden');
-        }
-
-        document.querySelectorAll('.traffic-light').forEach(el => el.classList.remove('green'));
-        if (data.current_green_0) document.getElementById(`light-${data.current_green_0}`)?.classList.add('green');
-        if (data.current_green_1) document.getElementById(`light-${data.current_green_1}`)?.classList.add('green');
-
-        document.getElementById('stats-n').innerHTML = ` <span class="span-stat">${data.north_cars}</span>`;
-        document.getElementById('stats-s').innerHTML = ` <span class="span-stat">${data.south_cars}</span>`;
-        document.getElementById('stats-e').innerHTML = ` <span class="span-stat">${data.east_cars}</span>`;
-        document.getElementById('stats-w').innerHTML = ` <span class="span-stat">${data.west_cars}</span>`;
-
-        const ambInfo = { isAmbulance: data.ambulance, lane: data.ambulance_lane };
-        renderCars('north', data.north_cars, ambInfo);
-        renderCars('south', data.south_cars, ambInfo);
-        renderCars('east', data.east_cars, ambInfo);
-        renderCars('west', data.west_cars, ambInfo);
+        renderState(data);
 
     } catch (e) {
         console.warn("Fetch failed:", e);
     }
 }
 
+async function sendAction(actionStr) {
+    if (isReplaying) return;
+    
+    const apiUrl = getApiUrl();
+    const endpoint = `${apiUrl}/step`;
+    
+    try {
+        const body = {
+            action: actionStr,
+            task_id: currentTaskId
+        };
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body),
+            mode: 'cors'
+        });
+        if (!response.ok) throw new Error("HTTP error " + response.status);
+        const data = await response.json();
+        
+        episodeHistory.push(data);
+        if (episodeHistory.length > 500) episodeHistory.shift();
+        
+        renderState(data);
+    } catch(e) {
+        console.warn("Send action failed:", e);
+    }
+}
+
+function toggleReplay() {
+    const btn = document.getElementById('btn-replay');
+    if (!isReplaying) {
+        if (episodeHistory.length === 0) {
+            alert("No episode history to replay!");
+            return;
+        }
+        isReplaying = true;
+        btn.classList.add('active');
+        btn.innerText = "Stop Replay";
+        
+        if (fetchInterval) clearInterval(fetchInterval);
+        
+        replayIndex = 0;
+        replayInterval = setInterval(() => {
+            if (replayIndex < episodeHistory.length) {
+                renderState(episodeHistory[replayIndex]);
+                replayIndex++;
+            } else {
+                toggleReplay();
+            }
+        }, 500);
+    } else {
+        isReplaying = false;
+        btn.classList.remove('active');
+        btn.innerText = "Replay Episode";
+        
+        if (replayInterval) clearInterval(replayInterval);
+        
+        fetchState();
+        fetchInterval = setInterval(fetchState, 500);
+    }
+}
+
 fetchState();
-setInterval(fetchState, 500);
+fetchInterval = setInterval(fetchState, 500);

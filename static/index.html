@@ -48,10 +48,21 @@
                  </div>
             </div>
 
-            <!-- Endpoint config -->
+            <!-- Endpoint config & Controls -->
             <div class="config">
-                <label>Hugging Face Target API URL:</label>
-                <input type="text" id="api-url" value="https://huggingface.co/spaces/Mayank203892/smart-traffic-grid-env" />
+                <label>Target API URL:</label>
+                <input type="text" id="api-url" value="http://localhost:8000" />
+            </div>
+
+            <div class="controls">
+                <label>Manual Override:</label>
+                <div class="btn-grid">
+                    <button class="btn-action" onclick="sendAction('NORTH_GREEN')">North</button>
+                    <button class="btn-action" onclick="sendAction('SOUTH_GREEN')">South</button>
+                    <button class="btn-action" onclick="sendAction('EAST_GREEN')">East</button>
+                    <button class="btn-action" onclick="sendAction('WEST_GREEN')">West</button>
+                </div>
+                <button class="btn-replay" id="btn-replay" onclick="toggleReplay()">Replay Episode</button>
             </div>
         </aside>
 

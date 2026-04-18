@@ -29,7 +29,7 @@ class SmartTrafficEnv(
         ...     result = client.reset(task_id=1)
         ...     print(result.observation)
         ...
-        ...     action = SmartTrafficAction(action="NS_GREEN", task_id=1)
+        ...     action = SmartTrafficAction(action="NORTH_GREEN", task_id=1)
         ...     result = client.step(action)
         ...     print(result.observation.north_cars)
     """

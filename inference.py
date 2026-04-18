@@ -39,7 +39,7 @@ API_KEY      = os.getenv("HF_TOKEN") or os.getenv("API_KEY")
 API_BASE_URL = os.getenv("API_BASE_URL") or "https://router.huggingface.co/v1"
 MODEL_NAME   = os.getenv("MODEL_NAME")  or "Qwen/Qwen2.5-72B-Instruct"
 
-ENV_URL = "https://mayank203892-smart-traffic-grid-env.hf.space"
+ENV_URL = os.getenv("ENV_URL", "http://localhost:8000")
 
 BENCHMARK    = "traffic_env"
 MAX_STEPS    = 20
@@ -47,7 +47,7 @@ TEMPERATURE  = 0.2
 MAX_TOKENS   = 300
 SUCCESS_SCORE_THRESHOLD = 0.5
 
-ACTIONS = ["NS_GREEN", "EW_GREEN", "NE_GREEN", "NW_GREEN"]
+ACTIONS = ["NORTH_GREEN", "SOUTH_GREEN", "EAST_GREEN", "WEST_GREEN"]
 
 TASK_NAMES = {
     1: "task_1_easy",
@@ -72,10 +72,10 @@ SYSTEM_PROMPT = textwrap.dedent("""
     Red lanes accumulate +10 wait-time units per step.
 
     ACTIONS:
-      NS_GREEN — North + South get green
-      EW_GREEN — East  + West  get green
-      NE_GREEN — North + East  get green
-      NW_GREEN — North + West  get green
+      NORTH_GREEN — North gets green
+      SOUTH_GREEN — South gets green
+      EAST_GREEN  — East gets green
+      WEST_GREEN  — West gets green
 
     THINK step-by-step:
     1. Check for ambulance — which lane? Which action clears it?
@@ -150,7 +150,7 @@ def _extract_action(raw: str) -> str:
             return action
 
     # 3. Last resort
-    return "NS_GREEN"
+    return "NORTH_GREEN"
 
 
 def get_model_action(client: OpenAI, step: int, state: dict, history: List[str]) -> str:
@@ -170,7 +170,7 @@ def get_model_action(client: OpenAI, step: int, state: dict, history: List[str])
         return _extract_action(raw)
     except Exception as exc:
         print(f"[DEBUG] Model request failed: {exc}", flush=True)
-        return "NS_GREEN"  # fallback
+        return "NORTH_GREEN"  # fallback
 
 
 # ── Task runner ───────────────────────────────────────────────────────────────

@@ -27,16 +27,16 @@ class SmartTrafficAction(Action):
     Choose which pair of opposing lanes should receive the green light.
 
     Allowed values mirror the ACTIONS list from the original env.py:
-        - ``NS_GREEN`` : North + South green
-        - ``EW_GREEN`` : East + West green
-        - ``NE_GREEN`` : North + East green
-        - ``NW_GREEN`` : North + West green
+        - ``NORTH_GREEN`` : North green
+        - ``SOUTH_GREEN`` : South green
+        - ``EAST_GREEN`` : East green
+        - ``WEST_GREEN`` : West green
     """
-    action: Literal["NS_GREEN", "EW_GREEN", "NE_GREEN", "NW_GREEN"] = Field(
-        default="NS_GREEN",
+    action: Literal["NORTH_GREEN", "SOUTH_GREEN", "EAST_GREEN", "WEST_GREEN"] = Field(
+        default="NORTH_GREEN",
         description=(
             "Traffic-signal phase to activate. "
-            "One of: NS_GREEN, EW_GREEN, NE_GREEN, NW_GREEN."
+            "One of: NORTH_GREEN, SOUTH_GREEN, EAST_GREEN, WEST_GREEN."
         ),
     )
 

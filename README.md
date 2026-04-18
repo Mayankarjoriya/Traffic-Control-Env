@@ -60,16 +60,16 @@ The agent submits one discrete signal phase per step.
 
 | Action | Lanes Getting Green |
 |--------|---------------------|
-| `NS_GREEN` | North + South |
-| `EW_GREEN` | East + West |
-| `NE_GREEN` | North + East |
-| `NW_GREEN` | North + West |
+| `NORTH_GREEN` | North |
+| `SOUTH_GREEN` | South |
+| `EAST_GREEN` | East |
+| `WEST_GREEN` | West |
 
 Each action payload also includes the `task_id` to indicate the active difficulty.
 
 ```json
 {
-  "action": "NS_GREEN",
+  "action": "NORTH_GREEN",
   "task_id": 1
 }
 ```
@@ -151,7 +151,7 @@ A score of `1.0` means no waiting time accumulated; `0.0` means the mean wait re
 
 ## Baseline Scores
 
-The following baseline scores were measured using a **round-robin policy** (cycling through `NS_GREEN → EW_GREEN → NE_GREEN → NW_GREEN` repeatedly, max 100 steps) with the graduated clearing model (up to 8 cars cleared per green lane per step):
+The following baseline scores were measured using a **round-robin policy** (cycling through `NORTH_GREEN → SOUTH_GREEN → EAST_GREEN → WEST_GREEN` repeatedly, max 100 steps) with the graduated clearing model (up to 8 cars cleared per green lane per step):
 
 | Task | Policy | Score |
 |------|--------|-------|
@@ -217,7 +217,7 @@ uv run --project . python inference.py
 Output follows the mandatory format:
 ```
 [START] task=task_1_easy env=traffic_env model=Qwen/Qwen2.5-72B-Instruct
-[STEP]  step=1 action=NS_GREEN reward=-2.10 done=false error=null
+[STEP]  step=1 action=NORTH_GREEN reward=-2.10 done=false error=null
 ...
 [END]   success=true steps=12 score=0.821 rewards=-2.10,-1.80,...
 ```
