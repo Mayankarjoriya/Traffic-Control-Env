@@ -27,6 +27,22 @@ Usage:
     # Or run directly:
     python -m server.app
 """
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+import os
+
+# ... existing imports and app = create_app(...) ...
+
+# Add this block below your app creation
+os.makedirs("static", exist_ok=True)
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/")
+async def serve_frontend():
+    # This serves your web view at the root URL of your HF Space
+    return FileResponse("static/index.html")
+
+
 
 try:
     from openenv.core.env_server.http_server import create_app

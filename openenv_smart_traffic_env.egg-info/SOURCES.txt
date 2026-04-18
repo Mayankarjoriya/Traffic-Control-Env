@@ -1,4 +1,8 @@
 README.md
+client.py
+graders.py
+inference.py
+models.py
 pyproject.toml
 ./client.py
 ./graders.py

@@ -27,17 +27,16 @@ The environment is built on the **OpenEnv** framework, exposing a clean REST/Web
 
 ```
 Traffic-Control-Env/
-└── smart_traffic_env/          # OpenEnv-compatible environment package
-    ├── server/
-    │   ├── app.py              # FastAPI application entry point
-    │   └── smart_traffic_env_environment.py  # Core simulation logic
-    ├── models.py               # Pydantic Action & Observation schemas
-    ├── client.py               # Python client for the HTTP server
-    ├── inference.py            # LLM agent inference script
-    ├── graders.py              # Baseline grading script
-    ├── openenv.yaml            # OpenEnv spec manifest
-    ├── Dockerfile              # Multi-stage Docker build
-    └── pyproject.toml          # Python project metadata & dependencies
+├── server/
+│   ├── app.py              # FastAPI application entry point
+│   └── smart_traffic_env_environment.py  # Core simulation logic
+├── models.py               # Pydantic Action & Observation schemas
+├── client.py               # Python client for the HTTP server
+├── inference.py            # LLM agent inference script
+├── graders.py              # Baseline grading script
+├── openenv.yaml            # OpenEnv spec manifest
+├── Dockerfile              # Multi-stage Docker build
+└── pyproject.toml          # Python project metadata & dependencies
 ```
 
 ---
@@ -177,8 +176,6 @@ The following baseline scores were measured using a **round-robin policy** (cycl
 ### Option A: Run with `uv` (local)
 
 ```bash
-cd smart_traffic_env
-
 # Install dependencies
 uv sync
 
@@ -189,8 +186,6 @@ uv run --project . server
 ### Option B: Run with Docker
 
 ```bash
-cd smart_traffic_env
-
 # Build the Docker image
 sudo docker build -t smart_traffic_env .
 
@@ -204,7 +199,7 @@ The server will be available at `http://localhost:8000`.
 
 ### Running the Inference Agent
 
-Configure your LLM credentials in `smart_traffic_env/.env`:
+Configure your LLM credentials in `.env`:
 
 ```bash
 HF_TOKEN=your_token_here
@@ -216,7 +211,6 @@ ENV_URL=http://localhost:8000
 Then run the inference script:
 
 ```bash
-cd smart_traffic_env
 uv run --project . python inference.py
 ```
 
@@ -233,7 +227,6 @@ Output follows the mandatory format:
 ### Running the Grader
 
 ```bash
-cd smart_traffic_env
 uv run --project . python graders.py
 ```
 
@@ -244,7 +237,6 @@ The grader runs all three tasks with the built-in round-robin baseline and print
 ### Validating Your Submission
 
 ```bash
-cd smart_traffic_env
 bash validate-submission.sh
 ```
 
