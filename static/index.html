@@ -1,94 +1,109 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-    <title>AdaptiFlow Live Simulation</title>
-    <style>
-        /* Basic styling - expand this into a visual crossroad */
-        body {
-            font-family: sans-serif;
-            text-align: center;
-            background: #222;
-            color: white;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 10px;
-            max-width: 600px;
-            margin: auto;
-        }
-
-        .lane {
-            padding: 20px;
-            background: #333;
-            border-radius: 8px;
-        }
-
-        .green-light {
-            border: 2px solid #00ff00;
-        }
-
-        .ambulance-alert {
-            background: #ff4444;
-        }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AdaptiFlow AI Traffic Control Live</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script defer src="main.js"></script>
 </head>
-
 <body>
-    <h1>🚦 Live Traffic Control Dashboard</h1>
-    <h3 id="task-status">Task: Loading... | Reward: 0.0</h3>
+    <div class="app-container">
+        <!-- Sidebar HUD -->
+        <aside class="dashboard-panel">
+            <div class="brand">
+                <h1 class="logo glow-text">🚦 AdaptiFlow</h1>
+                <p class="subtitle">AI Traffic Control Live Demo</p>
+            </div>
+            
+            <div class="metrics">
+                <div class="metric-card">
+                    <span class="m-label">Difficulty</span>
+                    <span class="m-value" id="hud-task">-</span>
+                </div>
+                <div class="metric-card">
+                    <span class="m-label">Latest Step</span>
+                    <span class="m-value text-blue" id="hud-step">0</span>
+                </div>
+                <div class="metric-card">
+                    <span class="m-label">Step Reward</span>
+                    <span class="m-value" id="hud-reward">0.00</span>
+                </div>
+                <div class="metric-card">
+                    <span class="m-label">Total Wait Time</span>
+                    <span class="m-value text-red" id="hud-wait">0s</span>
+                </div>
+            </div>
 
-    <div class="grid">
-        <div></div>
-        <div id="north" class="lane">North<br><span id="n-cars">0</span> cars</div>
-        <div></div>
+            <!-- Alerts -->
+            <div class="alerts">
+                 <div id="alert-rush" class="alert-box alert-hidden alert-rush">
+                    <span class="icon">⚠️</span> 
+                    <span>Rush Hour Lane: <strong id="val-rush">None</strong></span>
+                 </div>
+                 <div id="alert-ambulance" class="alert-box alert-hidden alert-ambulance">
+                    <span class="icon">🚑</span> 
+                    <span>Ambulance in: <strong id="val-amb">None</strong></span>
+                 </div>
+            </div>
 
-        <div id="west" class="lane">West<br><span id="w-cars">0</span> cars</div>
-        <div class="intersection">🔄</div>
-        <div id="east" class="lane">East<br><span id="e-cars">0</span> cars</div>
+            <!-- Endpoint config -->
+            <div class="config">
+                <label>Hugging Face Target API URL:</label>
+                <!-- Pre-filled with the user's specific space URL -->
+                <input type="text" id="api-url" value="https://huggingface.co/spaces/Mayank203892/smart-traffic-grid-env" />
+            </div>
+        </aside>
 
-        <div></div>
-        <div id="south" class="lane">South<br><span id="s-cars">0</span> cars</div>
-        <div></div>
+        <!-- Intersection Map -->
+        <main class="sim-area">
+            <div class="intersection-grid">
+                
+                <!-- TOP LEFT -->
+                <div class="grid-cell grass"></div>
+                <!-- NORTH LANE -->
+                <div class="grid-cell road road-v lane-north">
+                     <div class="lane-stats">North<span id="stats-n"><span class="span-stat">0</span></span></div>
+                     <div class="traffic-light light-north" id="light-north"></div>
+                     <div class="cars-container" id="cars-north"></div>
+                </div>
+                <!-- TOP RIGHT -->
+                <div class="grid-cell grass"></div>
+
+                <!-- WEST LANE -->
+                <div class="grid-cell road road-h lane-west">
+                    <div class="lane-stats">West<span id="stats-w"><span class="span-stat">0</span></span></div>
+                    <div class="traffic-light light-west" id="light-west"></div>
+                    <div class="cars-container" id="cars-west"></div>
+                </div>
+                <!-- CENTER (The Intersection) -->
+                <div class="grid-cell intersection-center">
+                    <div class="crosswalk north-cw"></div>
+                    <div class="crosswalk south-cw"></div>
+                    <div class="crosswalk east-cw"></div>
+                    <div class="crosswalk west-cw"></div>
+                </div>
+                <!-- EAST LANE -->
+                <div class="grid-cell road road-h lane-east">
+                    <div class="lane-stats">East<span id="stats-e"><span class="span-stat">0</span></span></div>
+                    <div class="traffic-light light-east" id="light-east"></div>
+                    <div class="cars-container" id="cars-east"></div>
+                </div>
+
+                <!-- BOTTOM LEFT -->
+                <div class="grid-cell grass"></div>
+                <!-- SOUTH LANE -->
+                <div class="grid-cell road road-v lane-south">
+                     <div class="lane-stats">South<span id="stats-s"><span class="span-stat">0</span></span></div>
+                     <div class="traffic-light light-south" id="light-south"></div>
+                     <div class="cars-container" id="cars-south"></div>
+                </div>
+                <!-- BOTTOM RIGHT -->
+                <div class="grid-cell grass"></div>
+
+            </div>
+        </main>
     </div>
-
-    <script>
-        async function updateDashboard() {
-            try {
-                // Fetch live state from your FastAPI server
-                const response = await fetch('/state');
-                const data = await response.json();
-
-                // Update text
-                document.getElementById('n-cars').innerText = data.north_cars;
-                document.getElementById('s-cars').innerText = data.south_cars;
-                document.getElementById('e-cars').innerText = data.east_cars;
-                document.getElementById('w-cars').innerText = data.west_cars;
-
-                // Update metadata and handle highlights
-                document.getElementById('task-status').innerText = `Task: ${data.task_id} | Reward: ${data.reward.toFixed(2)}`;
-
-                // Clear previous lights/alerts
-                document.querySelectorAll('.lane').forEach(el => el.classList.remove('green-light', 'ambulance-alert'));
-
-                // Set green lights based on current phase
-                if (data.current_green_0) document.getElementById(data.current_green_0).classList.add('green-light');
-                if (data.current_green_1) document.getElementById(data.current_green_1).classList.add('green-light');
-
-                // Flag ambulance
-                if (data.ambulance && data.ambulance_lane) {
-                    document.getElementById(data.ambulance_lane).classList.add('ambulance-alert');
-                }
-            } catch (error) {
-                console.error("Simulation offline or waiting for step...");
-            }
-        }
-
-        // Poll the server state every 500ms
-        setInterval(updateDashboard, 500);
-    </script>
 </body>
-
 </html>

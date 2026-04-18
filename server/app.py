@@ -52,7 +52,8 @@ app = create_app(
     max_concurrent_envs=1,  # increase this number to allow more concurrent WebSocket sessions
 )
 
-
+from fastapi.staticfiles import StaticFiles
+app.mount("/ui", StaticFiles(directory="static", html=True), name="static_ui")
 
 def main(host: str = "0.0.0.0", port: int = 8000):
     """
